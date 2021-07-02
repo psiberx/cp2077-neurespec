@@ -34,7 +34,7 @@ It's bound to the same key used to disassemble items (default is `Z` for keyboar
 When an attribute is downgraded, perks that no longer meet the requirements will be reset, 
 and the corresponding perk points will be restored.
 
-On the other hand, skills are never lowered to match the new attribute level.  
+On the other hand, skills are never lowered to match the new attribute level. 
 You can keep gained skill levels even if the new attribute level is lower.
 
 ### Perks
