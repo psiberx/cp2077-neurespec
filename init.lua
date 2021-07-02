@@ -1,7 +1,7 @@
 --[[
 NeureSpec
 - Respec attributes, perks and skills
-- Integrates into Hub menu
+- Integrates into the Hub menu
 - Multi-language support
 
 Copyright (c) 2021 psiberx
