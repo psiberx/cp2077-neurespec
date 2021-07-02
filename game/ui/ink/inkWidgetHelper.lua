@@ -48,7 +48,7 @@ function inkWidgetHelper.ApplyButtonStyle(buttonController, customStyle)
 	end
 
 	local buttonStyle = {
-		width = 520,
+		width = 540,
 		height = 94,
 		paddingTop = 2,
 		paddingLeft = 35,
