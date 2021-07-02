@@ -21,7 +21,7 @@ You should have `<Cyberpunk 2077>/bin/x64/plugins/cyber_engine_tweaks/mods/Neure
 ## Usage
 
 NeureSpec integrates into the *Hub* menu.
-You can access new functions in the *Hub > Character* secion.
+You can access new functions in the *Hub > Character* section.
 
 To manage individual attributes, perks and skills, follow button hints in the bottom right corner of the screen.
 
