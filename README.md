@@ -50,7 +50,8 @@ When a skill level is hovered and is available, a new action *Select* will appea
 It's bound to the same key used to buy perk (default is `F` for keyboard input).
 
 When skill level is lowered all the bonuses from corresponding levels are canceled, including perk points.
-It's possible to get negative perk points if you have no unspent perk points, and you cancel the level that gives perk points.  
+It's possible to get negative perk points if you have no unspent perk points, 
+and you cancel the level that gives perk points.  
 
 ### Full Reset
 
@@ -61,7 +62,10 @@ Two new buttons added to the *Character* screen:
 
 ## Translations
 
-
+This mod has multilingual support. 
+Contact me if you would like to see the mod in your language and would like to participate. 
+At the moment, there are not so many texts to translate. 
+Check the [english translation](https://github.com/psiberx/cp2077-neurespec/blob/master/data/lang/en-us.lua) file to get them. 
 
 ## Acknowledgements
 
