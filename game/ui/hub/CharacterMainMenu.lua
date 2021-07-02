@@ -1,4 +1,5 @@
 local Module = require('core/support/Module')
+local Cron = require('core/services/Cron')
 local GameLocale = require('core/services/GameLocale')
 local PlayerDevData = require('game/systems/PlayerDevData')
 
@@ -20,57 +21,59 @@ end
 
 ---@public
 function CharacterMainMenu:OnBootstrap()
-	---@param controller PerksMenuAttributeItemController
+	---@param mainController PerksMenuAttributeItemController
 	---@param attributeData AttributeData
-  	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(controller, attributeData)
+  	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(mainController, attributeData)
 		if attributeData then
-			self:SetAttributeButtonHints(controller, attributeData)
+			self:SetAttributeButtonHints(mainController, attributeData)
 		end
 	end)
 
-	---@param controller PerksMenuAttributeItemController
-	Observe('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOut', function(controller)
-		self:ResetAttributeButtonHints(controller)
+	---@param mainController PerksMenuAttributeItemController
+	Observe('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOut', function(mainController)
+		self:ResetAttributeButtonHints(mainController)
 	end)
 
-	---@param controller PerksMenuAttributeItemController
+	---@param attributeController PerksMenuAttributeItemController
 	---@param event inkPointerEvent
-	Observe('PerksMenuAttributeItemController', 'OnAttributeItemHold', function(controller, event)
+	Observe('PerksMenuAttributeItemController', 'OnAttributeItemHold', function(attributeController, event)
 		local playerData = PlayerDevData.resolve()
-		local attributeData = controller.attributeDisplayController.attributeData
+		local attributeData = attributeController.attributeDisplayController.attributeData
 
 		if event:IsAction(self.revokeAttributeAction) and attributeData and playerData:CanRevokeAttribute(attributeData.value) then
 			local progress = event:GetHoldProgress()
 
-			if controller.holdStarted and progress >= 1 then
+			if attributeController.holdStarted and progress >= 1 then
 				playerData:RevokeAttribute(attributeData.type)
 
-				--self.recentlyPurchased = true
-				controller.dataManager:UpdateData()
+				self:UpdateDisplayData(attributeController)
 
 				local animOptions = inkanimPlaybackOptions.new()
 				animOptions.playReversed = true
 
-				local animProxy = controller.attributeDisplayController:PlayLibraryAnimation('buy_attribute', animOptions)
+				local animProxy = attributeController.attributeDisplayController:PlayLibraryAnimation('buy_attribute', animOptions)
 				animProxy:RegisterToCallback(inkanimEventType.OnFinish, self.animCallbackProxy, 'OnAnimFinished')
 
-				table.insert(self.animCallbackTargets, controller)
+				table.insert(self.animCallbackTargets, attributeController)
 
-				controller:PlaySound('Item', 'OnCraftFailed')
+				attributeController:PlaySound('Item', 'OnCraftFailed')
 			end
 		end
 	end)
 
-	---@param controller PerksMenuAttributeDisplayController
-	Observe('PerksMenuAttributeDisplayController', 'Update', function(controller)
-		if controller.attributeData and self:IsAttributeHovered(controller) then
-			self:SetAttributeButtonHints(controller.dataManager.parentGameCtrl, controller.attributeData)
-		end
+	---@param attributeDisplayController PerksMenuAttributeDisplayController
+	Observe('PerksMenuAttributeDisplayController', 'Update', function(attributeDisplayController)
+		-- Nested RTTI call workaround
+		Cron.NextTick(function()
+			if attributeDisplayController.attributeData and self:IsAttributeHovered(attributeDisplayController) then
+				self:SetAttributeButtonHints(attributeDisplayController.dataManager.parentGameCtrl, attributeDisplayController.attributeData)
+			end
+		end)
 	end)
 
-	---@param controller TargetHitIndicatorGameController
-	Observe('TargetHitIndicatorGameController', 'OnAnimFinished', function(controller)
-		if not controller.rootWidget and #self.animCallbackTargets > 0 then
+	---@param proxyController TargetHitIndicatorGameController
+	Observe('TargetHitIndicatorGameController', 'OnAnimFinished', function(proxyController)
+		if not proxyController.rootWidget and #self.animCallbackTargets > 0 then
 			if self.animCallbackTargets[#self.animCallbackTargets]:IsA('PerksMenuAttributeItemController') then
 				local attributeItemController = table.remove(self.animCallbackTargets)
 				local attributeDisplayController = attributeItemController.attributeDisplayController
@@ -122,6 +125,13 @@ end
 ---@param mainController PerksMainGameController
 function CharacterMainMenu:ResetAttributeButtonHints(mainController)
 	mainController.buttonHintsController:RemoveButtonHint(self.revokeAttributeAction)
+end
+
+---@protected
+---@param attributeController PerksMenuAttributeItemController
+function CharacterMainMenu:UpdateDisplayData(attributeController)
+	attributeController.dataManager:UpdateData()
+	attributeController:Setup(attributeController.dataManager)
 end
 
 return CharacterMainMenu
