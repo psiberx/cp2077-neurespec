@@ -20,19 +20,19 @@ end
 
 ---@public
 function CharacterResetPanel:OnBootstrap()
-	---@param hubMenuController MenuHubLogicController
-	Observe('MenuHubLogicController', 'OnInitialize', function(hubMenuController)
-		self.hubMenuController = hubMenuController
+	---@param this MenuHubLogicController
+	Observe('MenuHubLogicController', 'OnInitialize', function(this)
+		self.hubMenuController = this
 	end)
 
 	Observe('MenuHubLogicController', 'OnUninitialize', function()
 		self.hubMenuController = nil
 	end)
 
-	---@param mainController PerksMainGameController
-	Observe('PerksMainGameController', 'ResetData', function(mainController)
+	---@param this PerksMainGameController
+	Observe('PerksMainGameController', 'ResetData', function(this)
 		if self.hubMenuController then
-			local resetPanelWidget = mainController.pointsDisplayController.resetWidget.widget
+			local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
 
 			self.resetAttrsController = inkButtonHelper.ReuseButton(self.hubMenuController.btnPhone.widget, resetPanelWidget)
 			self.resetPerksController = inkButtonHelper.ReuseButton(self.hubMenuController.btnShard.widget, resetPanelWidget)
@@ -40,13 +40,13 @@ function CharacterResetPanel:OnBootstrap()
 			inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
 				label = GameLocale.Text('UI-Menus-Attributes-ResetAttributes'),
 				menuData = { identifier = self.resetAttrsEventId },
-				callback = { object = mainController, method = 'OnResetPerksClick' }
+				callback = { object = this, method = 'OnResetPerksClick' }
 			})
 
 			inkButtonHelper.ApplyButtonState(self.resetPerksController, {
 				label = GameLocale.Text('UI-Menus-Perks-ResetPerks'),
 				menuData = { identifier = self.resetPerksEventId },
-				callback = { object = mainController, method = 'OnResetPerksClick' }
+				callback = { object = this, method = 'OnResetPerksClick' }
 			})
 
 			inkButtonHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { top = 170 }	})
@@ -54,10 +54,10 @@ function CharacterResetPanel:OnBootstrap()
 		end
 	end)
 
-	---@param mainController PerksMainGameController
-  	Observe('PerksMainGameController', 'UpdateAvailablePoints', function(mainController)
-		if self.resetAttrsController and mainController.activeScreen == CharacterScreenType.Attributes then
-			local resetPanelWidget = mainController.pointsDisplayController.resetWidget.widget
+	---@param this PerksMainGameController
+  	Observe('PerksMainGameController', 'UpdateAvailablePoints', function(this)
+		if self.resetAttrsController and this.activeScreen == CharacterScreenType.Attributes then
+			local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
 			resetPanelWidget:GetWidget('resetPointBtn'):SetVisible(false)
 			resetPanelWidget:GetWidget('spentPoints'):SetVisible(false)
 			resetPanelWidget:SetVisible(true)
@@ -87,15 +87,15 @@ function CharacterResetPanel:OnBootstrap()
 		end
 	end)
 
-	---@param messageController GenericMessageNotification
-	Observe('GenericMessageNotification', 'OnInitialize', function(messageController)
+	---@param this GenericMessageNotification
+	Observe('GenericMessageNotification', 'OnInitialize', function(this)
 		if self.resetEventId then
 			Cron.NextTick(function()
-				messageController.data.identifier = self.resetEventId
+				this.data.identifier = self.resetEventId
 
 				if self.resetEventId == self.resetAttrsEventId then
-					inkTextRef.SetText(messageController.title, GameLocale.Text('UI-Menus-Attributes-ResetAttributes'))
-					inkTextRef.SetText(messageController.message, GameLocale.Text('UI-Menus-Attributes-ResetConfirmation'))
+					inkTextRef.SetText(this.title, GameLocale.Text('UI-Menus-Attributes-ResetAttributes'))
+					inkTextRef.SetText(this.message, GameLocale.Text('UI-Menus-Attributes-ResetConfirmation'))
 				end
 
 				self.resetEventId = nil
@@ -103,24 +103,24 @@ function CharacterResetPanel:OnBootstrap()
 		end
 	end)
 
-	---@param mainController PerksMainGameController
+	---@param this PerksMainGameController
 	---@param confrmationData inkGameNotificationData
-	Override('PerksMainGameController', 'OnResetConfirmed', function(mainController, confrmationData)
+	Override('PerksMainGameController', 'OnResetConfirmed', function(this, confrmationData)
 		if confrmationData.result == GenericMessageNotificationResult.Yes then
 			local playerData = PlayerDevData.resolve()
 
 			if confrmationData.identifier == self.resetAttrsEventId then
 				playerData:ResetAttributes()
-				mainController:PlaySound('Item', 'OnCrafted')
+				this:PlaySound('Item', 'OnCrafted')
 			elseif confrmationData.identifier == self.resetPerksEventId then
 				playerData:ResetPerks()
-				mainController:PlaySound('Item', 'OnCrafted')
+				this:PlaySound('Item', 'OnCrafted')
 			end
 
-			mainController.dataManager:UpdateData()
+			this.dataManager:UpdateData()
 		end
 
-		mainController.resetConfirmationToken = inkGameNotificationToken.new()
+		this.resetConfirmationToken = inkGameNotificationToken.new()
 	end)
 
 	Observe('MenuScenario_Idle', 'OnEnterScenario', function()

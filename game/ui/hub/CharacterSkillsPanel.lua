@@ -20,10 +20,10 @@ end
 
 ---@public
 function CharacterSkillsPanel:OnBootstrap()
-	---@param mainController PerksMainGameController
-	Observe('PerksMainGameController', 'OnInitialize', function(mainController)
-		self.mainController = mainController
-		self.perksController = inkWidgetRef.GetController(mainController.perksScreen)
+	---@param this PerksMainGameController
+	Observe('PerksMainGameController', 'OnInitialize', function(this)
+		self.mainController = this
+		self.perksController = inkWidgetRef.GetController(this.perksScreen)
 	end)
 
 	Observe('PerksMainGameController', 'OnUninitialize', function()
@@ -32,9 +32,9 @@ function CharacterSkillsPanel:OnBootstrap()
 		self.adjustButtonHint = nil
 	end)
 
-	---@param rewardController StatsStreetCredReward
-	Observe('StatsStreetCredReward', 'SetData', function(rewardController)
-		if rewardController.rewardSize == 0 then
+	---@param this StatsStreetCredReward
+	Observe('StatsStreetCredReward', 'SetData', function(this)
+		if this.rewardSize == 0 then
 			Cron.NextTick(function()
 				self:PrepareButtonHints()
 			end)

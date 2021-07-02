@@ -6,6 +6,8 @@ local PlayerDevData = require('game/systems/PlayerDevData')
 ---@class CharacterPerksMenu : Module
 ---@field upgradePerkAction CName
 ---@field revokePerkAction CName
+---@field mainController PerksMainGameController
+---@field revokeTooltipHint inkWidget
 local CharacterPerksMenu = Module.extend()
 
 ---@protected
@@ -16,92 +18,102 @@ end
 
 ---@public
 function CharacterPerksMenu:OnBootstrap()
-	---@param controller PerksMainGameController
+	---@param this PerksMainGameController
+	Observe('PerksMainGameController', 'OnInitialize', function(this)
+		self.mainController = this
+	end)
+
+	Observe('PerksMainGameController', 'OnUninitialize', function()
+		self.mainController = nil
+		self.revokeTooltipHint = nil
+	end)
+
 	---@param perkData BasePerkDisplayData
-  	Override('PerksMainGameController', 'SetPerksButtonHintHoverOver', function(controller, perkData)
+  	Override('PerksMainGameController', 'SetPerksButtonHintHoverOver', function(_, perkData)
 		if perkData then
-			self:SetPerkButtonHints(controller, perkData)
+			self:SetPerkButtonHints(perkData)
 		end
 	end)
 
-	---@param controller PerksMainGameController
-	Observe('PerksMainGameController', 'SetPerksButtonHintHoverOut', function(controller)
-		self:ResetPerkButtonHints(controller)
+	Observe('PerksMainGameController', 'SetPerksButtonHintHoverOut', function()
+		self:ResetPerkButtonHints()
 	end)
 
-	---@param perkController PerkDisplayController
+	---@param this PerkDisplayController
 	---@param event inkPointerEvent
-	Observe('PerkDisplayController', 'OnPerkDisplayHold', function(perkController, event)
+	Observe('PerkDisplayController', 'OnPerkDisplayHold', function(this, event)
 		local playerData = PlayerDevData.resolve()
-		local perkData = perkController.displayData
+		local perkData = this.displayData
 
 		if event:IsAction(self.revokePerkAction) and playerData:CanRevokePerk(perkData.level) then
 			local progress = event:GetHoldProgress()
 
-			if not perkController.holdStarted and progress >= 0 then
-				perkController.holdStarted = true
-			elseif perkController.holdStarted and progress >= 1 then
-				if perkController.isTrait then
+			if not this.holdStarted and progress >= 0 then
+				this.holdStarted = true
+			elseif this.holdStarted and progress >= 1 then
+				if this.isTrait then
 					playerData:RevokeTrait(perkData.type)
 				else
 					playerData:RevokePerk(perkData.type)
 				end
 
-				perkController.recentlyPurchased = true
-				self:UpdateDisplayData(perkController)
+				this.recentlyPurchased = true
+				self:UpdateDisplayData(this)
 
-				perkController:PlaySound('Item', 'OnCraftFailed')
-				perkController:PlayLibraryAnimation('buy_perk')
+				this:PlaySound('Item', 'OnCraftFailed')
+				this:PlayLibraryAnimation('buy_perk')
 			end
 		end
 	end)
 
-	---@param perkController PerkDisplayController
+	---@param this PerkDisplayController
 	---@param perkData BasePerkDisplayData
-	Observe('PerkDisplayController', 'Setup', function(perkController, perkData)
-		if perkController.recentlyPurchased then
+	Observe('PerkDisplayController', 'Setup', function(this, perkData)
+		if this.recentlyPurchased then
 			if perkData then
 				-- Nested RTTI call workaround
 				Cron.NextTick(function()
-					self:SetPerkButtonHints(perkController.dataManager.parentGameCtrl, perkData)
+					self:SetPerkButtonHints(this.dataManager.parentGameCtrl, perkData)
 				end)
 			end
 
-			perkController.recentlyPurchased = false
+			this.recentlyPurchased = false
 		end
 	end)
 end
 
 ---@protected
----@param mainController PerksMainGameController
 ---@param perkData BasePerkDisplayData
-function CharacterPerksMenu:SetPerkButtonHints(mainController, perkData)
-	local playerData = PlayerDevData.resolve()
+function CharacterPerksMenu:SetPerkButtonHints(perkData)
+	if self.mainController then
+		local playerData = PlayerDevData.resolve()
 
-	if playerData:CanRevokePerk(perkData.level) then
-		mainController.buttonHintsController:AddButtonHint(self.revokePerkAction, GameLocale.ActionHold('LocKey#17848'))
-	else
-		mainController.buttonHintsController:RemoveButtonHint(self.revokePerkAction)
+		if playerData:CanRevokePerk(perkData.level) then
+			self.mainController.buttonHintsController:AddButtonHint(self.revokePerkAction, GameLocale.ActionHold('LocKey#17848'))
+		else
+			self.mainController.buttonHintsController:RemoveButtonHint(self.revokePerkAction)
+		end
+
+		if self.mainController.dataManager:IsPerkUpgradeable(perkData) then
+			self.mainController.buttonHintsController:AddButtonHint(self.upgradePerkAction, GameLocale.ActionHold('UI-ScriptExports-Buy0'))
+		else
+			self.mainController.buttonHintsController:RemoveButtonHint(self.upgradePerkAction)
+		end
+
+		local cursorData = MenuCursorUserData.new()
+		cursorData:AddAction(self.upgradePerkAction)
+		cursorData:AddAction(self.revokePerkAction)
+		cursorData:SetAnimationOverride('hoverOnHoldToComplete')
+
+		self.mainController:SetCursorContext('Hover', cursorData)
 	end
-
-	if mainController.dataManager:IsPerkUpgradeable(perkData) then
-		mainController.buttonHintsController:AddButtonHint(self.upgradePerkAction, GameLocale.ActionHold('UI-ScriptExports-Buy0'))
-	else
-		mainController.buttonHintsController:RemoveButtonHint(self.upgradePerkAction)
-	end
-
-	local cursorData = MenuCursorUserData.new()
-	cursorData:AddAction(self.upgradePerkAction)
-	cursorData:AddAction(self.revokePerkAction)
-	cursorData:SetAnimationOverride('hoverOnHoldToComplete')
-
-	mainController:SetCursorContext('Hover', cursorData)
 end
 
 ---@protected
----@param mainController PerksMainGameController
-function CharacterPerksMenu:ResetPerkButtonHints(mainController)
-	mainController.buttonHintsController:RemoveButtonHint(self.revokePerkAction)
+function CharacterPerksMenu:ResetPerkButtonHints()
+	if self.mainController then
+		self.mainController.buttonHintsController:RemoveButtonHint(self.revokePerkAction)
+	end
 end
 
 ---@protected

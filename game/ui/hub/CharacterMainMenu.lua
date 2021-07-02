@@ -8,9 +8,9 @@ local inkTooltipHelper = require('game/ui/ink/inkTooltipHelper')
 ---@field upgradeAttributeAction CName
 ---@field revokeAttributeAction CName
 ---@field mainController PerksMainGameController
+---@field revokeTooltipHint inkWidget
 ---@field animCallbackProxy TargetHitIndicatorGameController
 ---@field animCallbackTargets table
----@field revokeTooltipHint inkWidget
 local CharacterMainMenu = Module.extend()
 
 ---@protected
@@ -38,7 +38,7 @@ function CharacterMainMenu:OnBootstrap()
 		local isAttributeHovered = false
 
 		for _, attributeController in ipairs(this.attributesControllersList) do
-			if self:IsAttributeHovered(attributeController.attributeDisplayController) then
+			if self:IsAttributeHovered(attributeController) then
 				isAttributeHovered = true
 				break
 			end
@@ -101,6 +101,34 @@ function CharacterMainMenu:OnBootstrap()
 		end
 	end)
 
+	---@param proxyController TargetHitIndicatorGameController
+	Observe('TargetHitIndicatorGameController', 'OnAnimFinished', function(proxyController)
+		if not proxyController.rootWidget and #self.animCallbackTargets > 0 then
+			if self.animCallbackTargets[#self.animCallbackTargets]:IsA('PerksMenuAttributeItemController') then
+				local attributeItemController = table.remove(self.animCallbackTargets)
+
+				local attributeDisplayController = attributeItemController.attributeDisplayController
+				attributeDisplayController:PlayLibraryAnimation('buy_attribute'):GotoEndAndStop(true)
+				attributeDisplayController:ResetHoverOpacity()
+
+				if self:IsAttributeHovered(attributeItemController) then
+					attributeDisplayController:SetHovered(true)
+				end
+			end
+		end
+	end)
+
+	---@param this PerksMainGameController
+	---@param event AttributeBoughtEvent
+	Observe('PerksMainGameController', 'OnAttributePurchased', function(this, event)
+		for _, attributeController in ipairs(this.attributesControllersList) do
+			if attributeController.data.type == event.attributeType then
+				self:UpdateDisplayData(attributeController)
+				break
+			end
+		end
+	end)
+
 	---@param this PerksMenuAttributeDisplayController
 	Observe('PerksMenuAttributeDisplayController', 'Update', function(this)
 		-- Nested RTTI call workaround
@@ -110,29 +138,16 @@ function CharacterMainMenu:OnBootstrap()
 			end
 		end)
 	end)
-
-	---@param proxyController TargetHitIndicatorGameController
-	Observe('TargetHitIndicatorGameController', 'OnAnimFinished', function(proxyController)
-		if not proxyController.rootWidget and #self.animCallbackTargets > 0 then
-			if self.animCallbackTargets[#self.animCallbackTargets]:IsA('PerksMenuAttributeItemController') then
-				local attributeItemController = table.remove(self.animCallbackTargets)
-				local attributeDisplayController = attributeItemController.attributeDisplayController
-
-				attributeDisplayController:PlayLibraryAnimation('buy_attribute'):GotoEndAndStop(true)
-				attributeDisplayController:ResetHoverOpacity()
-
-				if self:IsAttributeHovered(attributeDisplayController) then
-					attributeDisplayController:SetHovered(true)
-				end
-			end
-		end
-	end)
 end
 
 ---@protected
----@param attributeDisplayController PerksMenuAttributeDisplayController
-function CharacterMainMenu:IsAttributeHovered(attributeDisplayController)
-	return inkWidgetRef.GetState(attributeDisplayController.widgetWrapper).value == 'Hovered'
+---@param attributeController PerksMenuAttributeItemController|PerksMenuAttributeDisplayController
+function CharacterMainMenu:IsAttributeHovered(attributeController)
+	if attributeController:IsA('PerksMenuAttributeItemController') then
+		attributeController = attributeController.attributeDisplayController
+	end
+
+	return inkWidgetRef.GetState(attributeController.widgetWrapper).value == 'Hovered'
 end
 
 ---@protected
