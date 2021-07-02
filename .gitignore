@@ -1,0 +1,6 @@
+/.dev
+/.idea
+/dist
+/db.sqlite3
+/*.log
+~$*
