@@ -2,5 +2,6 @@
 /.idea
 /dist
 /db.sqlite3
+/debug.lua
 /*.log
 ~$*

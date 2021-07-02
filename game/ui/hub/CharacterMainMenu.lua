@@ -2,71 +2,111 @@ local Module = require('core/support/Module')
 local Cron = require('core/services/Cron')
 local GameLocale = require('core/services/GameLocale')
 local PlayerDevData = require('game/systems/PlayerDevData')
+local inkTooltipHelper = require('game/ui/ink/inkTooltipHelper')
 
 ---@class CharacterMainMenu : Module
 ---@field upgradeAttributeAction CName
 ---@field revokeAttributeAction CName
+---@field mainController PerksMainGameController
 ---@field animCallbackProxy TargetHitIndicatorGameController
 ---@field animCallbackTargets table
+---@field revokeTooltipHint inkWidget
 local CharacterMainMenu = Module.extend()
 
 ---@protected
 function CharacterMainMenu:Initialize()
 	self.upgradeAttributeAction = CName.new('upgrade_perk')
 	self.revokeAttributeAction = CName.new('disassemble_item')
-
 	self.animCallbackProxy = TargetHitIndicatorGameController.new()
 	self.animCallbackTargets = {}
 end
 
 ---@public
 function CharacterMainMenu:OnBootstrap()
-	---@param mainController PerksMenuAttributeItemController
-	---@param attributeData AttributeData
-  	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(mainController, attributeData)
-		if attributeData then
-			self:SetAttributeButtonHints(mainController, attributeData)
+	---@param this PerksMainGameController
+	Observe('PerksMainGameController', 'OnInitialize', function(this)
+		self.mainController = this
+	end)
+
+	Observe('PerksMainGameController', 'OnUninitialize', function()
+		self.mainController = nil
+		self.revokeTooltipHint = nil
+	end)
+
+	---@param this PerksMainGameController
+  	Override('PerksMainGameController', 'OnAttributeHoverOut', function(this)
+		local isAttributeHovered = false
+
+		for _, attributeController in ipairs(this.attributesControllersList) do
+			if self:IsAttributeHovered(attributeController.attributeDisplayController) then
+				isAttributeHovered = true
+				break
+			end
+		end
+
+		if not isAttributeHovered then
+			this:PlayHoverAnimation(false)
+			this:SetAttributeBuyButtonHintHoverOut()
+			this:HideTooltip()
 		end
 	end)
 
-	---@param mainController PerksMenuAttributeItemController
-	Observe('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOut', function(mainController)
-		self:ResetAttributeButtonHints(mainController)
+	---@param attributeData AttributeData
+  	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(_, attributeData)
+		if attributeData then
+			self:SetButtonHints(attributeData)
+		end
 	end)
 
-	---@param attributeController PerksMenuAttributeItemController
+	Observe('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOut', function()
+		-- Nested RTTI call workaround
+		Cron.NextTick(function()
+			self:ResetButtonHints()
+		end)
+	end)
+
+	---@param this PerkMenuTooltipController
+	---@param tooltipData ATooltipData
+	Observe('PerkMenuTooltipController', 'SetupShared', function(this, tooltipData)
+		-- Nested RTTI call workaround
+		Cron.NextTick(function()
+			self:SetTooltipHints(this, tooltipData)
+		end)
+	end)
+
+	---@param this PerksMenuAttributeItemController
 	---@param event inkPointerEvent
-	Observe('PerksMenuAttributeItemController', 'OnAttributeItemHold', function(attributeController, event)
+	Observe('PerksMenuAttributeItemController', 'OnAttributeItemHold', function(this, event)
 		local playerData = PlayerDevData.resolve()
-		local attributeData = attributeController.attributeDisplayController.attributeData
+		local attributeData = this.attributeDisplayController.attributeData
 
 		if event:IsAction(self.revokeAttributeAction) and attributeData and playerData:CanRevokeAttribute(attributeData.value) then
 			local progress = event:GetHoldProgress()
 
-			if attributeController.holdStarted and progress >= 1 then
+			if this.holdStarted and progress >= 1 then
 				playerData:RevokeAttribute(attributeData.type)
 
-				self:UpdateDisplayData(attributeController)
+				self:UpdateDisplayData(this)
 
 				local animOptions = inkanimPlaybackOptions.new()
 				animOptions.playReversed = true
 
-				local animProxy = attributeController.attributeDisplayController:PlayLibraryAnimation('buy_attribute', animOptions)
+				local animProxy = this.attributeDisplayController:PlayLibraryAnimation('buy_attribute', animOptions)
 				animProxy:RegisterToCallback(inkanimEventType.OnFinish, self.animCallbackProxy, 'OnAnimFinished')
 
-				table.insert(self.animCallbackTargets, attributeController)
+				table.insert(self.animCallbackTargets, this)
 
-				attributeController:PlaySound('Item', 'OnCraftFailed')
+				this:PlaySound('Item', 'OnCraftFailed')
 			end
 		end
 	end)
 
-	---@param attributeDisplayController PerksMenuAttributeDisplayController
-	Observe('PerksMenuAttributeDisplayController', 'Update', function(attributeDisplayController)
+	---@param this PerksMenuAttributeDisplayController
+	Observe('PerksMenuAttributeDisplayController', 'Update', function(this)
 		-- Nested RTTI call workaround
 		Cron.NextTick(function()
-			if attributeDisplayController.attributeData and self:IsAttributeHovered(attributeDisplayController) then
-				self:SetAttributeButtonHints(attributeDisplayController.dataManager.parentGameCtrl, attributeDisplayController.attributeData)
+			if this.attributeData and self:IsAttributeHovered(this) then
+				self:SetButtonHints(this.attributeData)
 			end
 		end)
 	end)
@@ -96,35 +136,64 @@ function CharacterMainMenu:IsAttributeHovered(attributeDisplayController)
 end
 
 ---@protected
----@param mainController PerksMainGameController
 ---@param attributeData AttributeData
-function CharacterMainMenu:SetAttributeButtonHints(mainController, attributeData)
-	local playerData = PlayerDevData.resolve()
+function CharacterMainMenu:SetButtonHints(attributeData)
+	if self.mainController then
+		local playerData = PlayerDevData.resolve()
 
-	if playerData:CanRevokeAttribute(attributeData.value) then
-		mainController.buttonHintsController:AddButtonHint(self.revokeAttributeAction, GameLocale.ActionHold('LocKey#17848'))
-	else
-		mainController.buttonHintsController:RemoveButtonHint(self.revokeAttributeAction)
+		if playerData:CanRevokeAttribute(attributeData.value) then
+			self.mainController.buttonHintsController:AddButtonHint(self.revokeAttributeAction, GameLocale.ActionHold('LocKey#17848'))
+		else
+			self.mainController.buttonHintsController:RemoveButtonHint(self.revokeAttributeAction)
+		end
+
+		if attributeData.availableToUpgrade and self.mainController.dataManager:HasAvailableAttributePoints() then
+			self.mainController.buttonHintsController:AddButtonHint(self.upgradeAttributeAction, GameLocale.ActionHold('UI-ScriptExports-Buy0'))
+		else
+			self.mainController.buttonHintsController:RemoveButtonHint(self.upgradeAttributeAction)
+		end
+
+		local cursorData = MenuCursorUserData.new()
+		cursorData:AddAction(self.upgradeAttributeAction)
+		cursorData:AddAction(self.revokeAttributeAction)
+		cursorData:SetAnimationOverride('hoverOnHoldToComplete')
+
+		self.mainController:SetCursorContext('Hover', cursorData)
 	end
-
-	if attributeData.availableToUpgrade and mainController.dataManager:HasAvailableAttributePoints() then
-		mainController.buttonHintsController:AddButtonHint(self.upgradeAttributeAction, GameLocale.ActionHold('UI-ScriptExports-Buy0'))
-	else
-		mainController.buttonHintsController:RemoveButtonHint(self.upgradeAttributeAction)
-	end
-
-	local cursorData = MenuCursorUserData.new()
-	cursorData:AddAction(self.upgradeAttributeAction)
-	cursorData:AddAction(self.revokeAttributeAction)
-	cursorData:SetAnimationOverride('hoverOnHoldToComplete')
-
-	mainController:SetCursorContext('Hover', cursorData)
 end
 
 ---@protected
----@param mainController PerksMainGameController
-function CharacterMainMenu:ResetAttributeButtonHints(mainController)
-	mainController.buttonHintsController:RemoveButtonHint(self.revokeAttributeAction)
+function CharacterMainMenu:ResetButtonHints()
+	if self.mainController then
+		self.mainController.buttonHintsController:RemoveButtonHint(self.revokeAttributeAction)
+	end
+end
+
+---@protected
+---@param tooltipController PerkMenuTooltipController
+---@param tooltipData AttributeTooltipData
+function CharacterMainMenu:SetTooltipHints(tooltipController, tooltipData)
+	if self.mainController then
+		if not self.revokeTooltipHint then
+			self.revokeTooltipHint = inkTooltipHelper.AppendAction(
+				self.mainController.tooltipsManager,
+				tooltipController,
+				self.revokeAttributeAction,
+				GameLocale.Text('Hold to Return'),
+				CName.new('holdToUpgrade')
+			)
+		end
+
+		if tooltipData.attributeData then
+			local playerData = PlayerDevData.resolve()
+
+			if playerData:CanRevokeAttribute(tooltipData.attributeData.value) then
+				self.revokeTooltipHint:SetVisible(true)
+			else
+				self.revokeTooltipHint:SetVisible(false)
+			end
+		end
+	end
 end
 
 ---@protected

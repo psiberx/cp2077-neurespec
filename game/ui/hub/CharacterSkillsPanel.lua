@@ -6,10 +6,10 @@ local inkWidgetHelper = require('game/ui/ink/inkWidgetHelper')
 
 ---@class CharacterSkillsPanel : Module
 ---@field adjustSkillAction CName
----@field adjustButtonHint ButtonHintListItem
----@field cursorEventCacther DebugHubMenuGameController
 ---@field mainController PerksMainGameController
 ---@field perksController PerkScreenController
+---@field adjustButtonHint ButtonHintListItem
+---@field cursorEventCacther DebugHubMenuGameController
 local CharacterSkillsPanel = Module.extend()
 
 ---@protected
@@ -53,7 +53,7 @@ function CharacterSkillsPanel:OnBootstrap()
 	end)
 
 	Observe('StatsStreetCredReward', 'OnHoverOut', function()
-		self:ResetPerkButtonHints()
+		self:ResetButtonHints()
 	end)
 
 	---@param event inkPointerEvent
@@ -149,7 +149,7 @@ function CharacterSkillsPanel:SetButtonHints(rewardItemController)
 end
 
 ---@protected
-function CharacterSkillsPanel:ResetPerkButtonHints()
+function CharacterSkillsPanel:ResetButtonHints()
 	if self.mainController then
 		self.mainController.buttonHintsController:RemoveButtonHint(self.adjustSkillAction)
 	end

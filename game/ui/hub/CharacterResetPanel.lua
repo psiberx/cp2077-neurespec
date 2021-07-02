@@ -2,7 +2,7 @@ local Module = require('core/support/Module')
 local Cron = require('core/services/Cron')
 local GameLocale = require('core/services/GameLocale')
 local PlayerDevData = require('game/systems/PlayerDevData')
-local inkWidgetHelper = require('game/ui/ink/inkWidgetHelper')
+local inkButtonHelper = require('game/ui/ink/inkButtonHelper')
 
 ---@class CharacterResetPanel : Module
 ---@field hubMenuController MenuHubLogicController
@@ -34,23 +34,23 @@ function CharacterResetPanel:OnBootstrap()
 		if self.hubMenuController then
 			local resetPanelWidget = mainController.pointsDisplayController.resetWidget.widget
 
-			self.resetAttrsController = inkWidgetHelper.ReuseButton(self.hubMenuController.btnPhone, resetPanelWidget)
-			self.resetPerksController = inkWidgetHelper.ReuseButton(self.hubMenuController.btnShard, resetPanelWidget)
+			self.resetAttrsController = inkButtonHelper.ReuseButton(self.hubMenuController.btnPhone.widget, resetPanelWidget)
+			self.resetPerksController = inkButtonHelper.ReuseButton(self.hubMenuController.btnShard.widget, resetPanelWidget)
 
-			inkWidgetHelper.ApplyButtonState(self.resetAttrsController, {
+			inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
 				label = GameLocale.Text('UI-Menus-Attributes-ResetAttributes'),
 				menuData = { identifier = self.resetAttrsEventId },
 				callback = { object = mainController, method = 'OnResetPerksClick' }
 			})
 
-			inkWidgetHelper.ApplyButtonState(self.resetPerksController, {
+			inkButtonHelper.ApplyButtonState(self.resetPerksController, {
 				label = GameLocale.Text('UI-Menus-Perks-ResetPerks'),
 				menuData = { identifier = self.resetPerksEventId },
 				callback = { object = mainController, method = 'OnResetPerksClick' }
 			})
 
-			inkWidgetHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { top = 170 }	})
-			inkWidgetHelper.ApplyButtonStyle(self.resetPerksController, { margin = { top = 50 } })
+			inkButtonHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { top = 170 }	})
+			inkButtonHelper.ApplyButtonStyle(self.resetPerksController, { margin = { top = 50 } })
 		end
 	end)
 
@@ -64,11 +64,11 @@ function CharacterResetPanel:OnBootstrap()
 
 			local playerData = PlayerDevData.resolve()
 
-			inkWidgetHelper.ApplyButtonState(self.resetAttrsController, {
+			inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
 				attrPoints = playerData:GetSpentPoints(gamedataDevelopmentPointType.Attribute),
 			})
 
-			inkWidgetHelper.ApplyButtonState(self.resetPerksController, {
+			inkButtonHelper.ApplyButtonState(self.resetPerksController, {
 				perkPoints = playerData:GetSpentPoints(gamedataDevelopmentPointType.Primary),
 			})
 		end
@@ -125,12 +125,12 @@ function CharacterResetPanel:OnBootstrap()
 
 	Observe('MenuScenario_Idle', 'OnEnterScenario', function()
 		if self.resetAttrsController then
-			inkWidgetHelper.DisposeButton(self.resetAttrsController)
+			inkButtonHelper.DisposeButton(self.resetAttrsController)
 			self.resetAttrsController = nil
 		end
 
 		if self.resetPerksController then
-			inkWidgetHelper.DisposeButton(self.resetPerksController)
+			inkButtonHelper.DisposeButton(self.resetPerksController)
 			self.resetPerksController = nil
 		end
 
