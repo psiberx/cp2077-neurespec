@@ -1,6 +1,6 @@
-# NeureSpec
+# Neu-Re-Spec
 
-NeureSpec is a chip that allows you to respec your character at any moment. 
+Neu-Re-Spec is a chip that allows you to respec your character at any moment. 
 
 - **Restore attribute points** from selected attributes or reset all attributes at once
 - **Restore perk points** from selected attributes or reset all perks at once
@@ -20,7 +20,7 @@ You should have `<Cyberpunk 2077>/bin/x64/plugins/cyber_engine_tweaks/mods/Neure
 
 ## Usage
 
-NeureSpec integrates into the *Hub* menu.
+Neu-Re-Spec integrates into the *Hub* menu.
 You can access new functions in the *Hub > Character* section.
 
 To manage individual attributes, perks and skills, follow button hints in the bottom right corner of the screen.
@@ -57,8 +57,8 @@ and you cancel the level that gives perk points.
 
 Two new buttons added to the *Character* screen:
 
-- Reset Perks &mdash; Restore all your perk points as with *TABULA E-RASA* item.
-- Reset Attributes &mdash; Restore all your attribute points.
+- *Reset Perks* &mdash; Restore all your perk points as with *TABULA E-RASA* item.
+- *Reset Attributes* &mdash; Restore all your attribute points.
 
 ## Translations
 
