@@ -1,6 +1,6 @@
 # Neu-Re-Spec
 
-Neu-Re-Spec is a chip that allows you to respec your character at any moment. 
+Neu-Re-Spec is a mod that allows you to respec your character at any moment. 
 
 - **Restore attribute points** from selected attributes or reset all attributes at once
 - **Restore perk points** from selected attributes or reset all perks at once
@@ -23,11 +23,12 @@ You should have `<Cyberpunk 2077>/bin/x64/plugins/cyber_engine_tweaks/mods/Neure
 Neu-Re-Spec integrates into the *Hub* menu.
 You can access new functions in the *Hub > Character* section.
 
-To manage individual attributes, perks and skills, follow button hints in the bottom right corner of the screen.
+To manage individual attributes, perks and skills, follow button hints in the tooltip 
+and in the bottom right corner of the screen.
 
 ### Attributes
 
-When an attribute is hovered and is not at the minimum level (3), a new action *Sell* is available,
+When an attribute is hovered and is not at the minimum level (3), a new *Return* action is available,
 which downgrades attribute one level and restores one attribute point.
 It's bound to the same key used to disassemble items (default is `Z` for keyboard input).
 
@@ -39,14 +40,14 @@ You can keep gained skill levels even if the new attribute level is lower.
 
 ### Perks
 
-Same as for attributes, when a perk is hovered and is not at zero level, a new action *Sell* is available,
+Same as for attributes, when a perk is hovered and is not at zero level, a new *Return* action is available,
 which downgrades perk one level and restores one perk point.
 It's bound to the same key used to disassemble items (default is `Z` for keyboard input).
 
 ### Skills
 
 You can adjust the skills to any level, up to the maximum level you've ever gotten in the current playthrough. 
-When a skill level is hovered and is available, a new action *Select* will appear in the button hints. 
+When a skill level is hovered and is available, a new *Select* action will appear in the button hints. 
 It's bound to the same key used to buy perk (default is `F` for keyboard input).
 
 When skill level is lowered all the bonuses from corresponding levels are canceled, including perk points.
@@ -66,6 +67,11 @@ This mod has multilingual support.
 Contact me if you would like to see the mod in your language and would like to participate. 
 At the moment, there are not so many texts to translate. 
 Check the [english translation](https://github.com/psiberx/cp2077-neurespec/blob/master/data/lang/en-us.lua) file to get them. 
+
+## Future Plans
+
+- An immersive version in which you have to meet the stats requirements and buy the mod from ripperdoc in order to access the respec functions.  
+- A redscript version of the mod.
 
 ## Acknowledgements
 
