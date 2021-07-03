@@ -87,6 +87,19 @@ function CharacterSkillsPanel:OnBootstrap()
 end
 
 ---@protected
+---@param rewardItemController StatsStreetCredRewardItem
+---@return number
+function CharacterSkillsPanel:GetProficiencyLevelFromRewardItem(rewardItemController)
+	return rewardItemController.data.level
+end
+
+---@protected
+---@return gamedataProficiencyType
+function CharacterSkillsPanel:GetCurrentProficiencyType()
+	return self.perksController:GetProficiencyDisplayData().proficiency
+end
+
+---@protected
 ---@return boolean
 function CharacterSkillsPanel:RegisterHoldCallbacks()
 	local rewardsController = self.perksController.rewardsController
@@ -153,19 +166,6 @@ function CharacterSkillsPanel:ResetButtonHints()
 	if self.mainController then
 		self.mainController.buttonHintsController:RemoveButtonHint(self.adjustSkillAction)
 	end
-end
-
----@protected
----@param rewardItemController StatsStreetCredRewardItem
----@return number
-function CharacterSkillsPanel:GetProficiencyLevelFromRewardItem(rewardItemController)
-	return rewardItemController.data.level
-end
-
----@protected
----@return gamedataProficiencyType
-function CharacterSkillsPanel:GetCurrentProficiencyType()
-	return self.perksController:GetProficiencyDisplayData().proficiency
 end
 
 ---@protected

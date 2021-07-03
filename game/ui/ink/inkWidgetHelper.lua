@@ -1,10 +1,20 @@
 local inkWidgetHelper = {}
 
----@param names string[]
+---@param path string|string[]
 ---@return inkWidgetPath
-function inkWidgetHelper.MakePath(names)
+function inkWidgetHelper.MakePath(path)
+	if type(path) == 'string' then
+		local result = {}
+
+		path:gsub('[^/]+', function(match)
+			table.insert(result, match)
+		end)
+
+		path = result
+	end
+
 	local widgetPath = inkWidgetPath.new()
-	widgetPath.names = names
+	widgetPath.names = path
 
 	return widgetPath
 end
@@ -26,6 +36,21 @@ function inkWidgetHelper.GetChildIndex(parentWidget, widgetName)
 	end
 
 	return -1
+end
+
+---@param parentWidget inkCompoundWidget
+---@param targetWidget inkWidget
+---@param siblingName CName
+function inkWidgetHelper.PlaceAfter(parentWidget, targetWidget, siblingName)
+	if type(siblingName) == 'string' then
+		siblingName = CName.new(siblingName)
+	end
+
+	local siblingPosition = inkWidgetHelper.GetChildIndex(parentWidget, siblingName)
+
+	if siblingPosition >= 0 then
+		parentWidget:ReorderChild(targetWidget, siblingPosition + 1)
+	end
 end
 
 ---@param parentWidget inkCompoundWidget

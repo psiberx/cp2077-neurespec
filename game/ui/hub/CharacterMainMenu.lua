@@ -192,22 +192,21 @@ function CharacterMainMenu:SetTooltipHints(tooltipController, tooltipData)
 		if not self.revokeTooltipHint then
 			self.revokeTooltipHint = inkTooltipHelper.AppendAction(
 				self.mainController.tooltipsManager,
+				0, -- Tooltip index is hardcoded
+				'wrapper/contentWrapper/contentFlexWrapper/categoriesWrapper',
+				'holdToUpgrade',
 				tooltipController,
 				self.revokeAttributeAction,
-				GameLocale.Text('Hold to Return'),
-				CName.new('holdToUpgrade')
+				GameLocale.Text('Hold to Return')
 			)
 		end
 
-		if tooltipData.attributeData then
-			local playerData = PlayerDevData.resolve()
+		local playerData = PlayerDevData.resolve()
+		local attributeLevel = tooltipData.attributeData.value
 
-			if playerData:CanRevokeAttribute(tooltipData.attributeData.value) then
-				self.revokeTooltipHint:SetVisible(true)
-			else
-				self.revokeTooltipHint:SetVisible(false)
-			end
-		end
+		self.revokeTooltipHint:SetVisible(
+			playerData:CanRevokeAttribute(attributeLevel)
+		)
 	end
 end
 

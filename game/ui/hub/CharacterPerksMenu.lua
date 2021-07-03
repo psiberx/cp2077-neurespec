@@ -2,6 +2,7 @@ local Module = require('core/support/Module')
 local Cron = require('core/services/Cron')
 local GameLocale = require('core/services/GameLocale')
 local PlayerDevData = require('game/systems/PlayerDevData')
+local inkTooltipHelper = require('game/ui/ink/inkTooltipHelper')
 
 ---@class CharacterPerksMenu : Module
 ---@field upgradePerkAction CName
@@ -31,12 +32,21 @@ function CharacterPerksMenu:OnBootstrap()
 	---@param perkData BasePerkDisplayData
   	Override('PerksMainGameController', 'SetPerksButtonHintHoverOver', function(_, perkData)
 		if perkData then
-			self:SetPerkButtonHints(perkData)
+			self:SetButtonHints(perkData)
 		end
 	end)
 
 	Observe('PerksMainGameController', 'SetPerksButtonHintHoverOut', function()
-		self:ResetPerkButtonHints()
+		self:ResetButtonHints()
+	end)
+
+	---@param this PerkDisplayTooltipController
+	---@param tooltipData ATooltipData
+	Observe('PerkDisplayTooltipController', 'RefreshTooltip', function(this, tooltipData)
+		-- Nested RTTI call workaround
+		Cron.NextTick(function()
+			self:SetTooltipHints(this, tooltipData)
+		end)
 	end)
 
 	---@param this PerkDisplayController
@@ -73,7 +83,7 @@ function CharacterPerksMenu:OnBootstrap()
 			if perkData then
 				-- Nested RTTI call workaround
 				Cron.NextTick(function()
-					self:SetPerkButtonHints(this.dataManager.parentGameCtrl, perkData)
+					self:SetButtonHints(perkData)
 				end)
 			end
 
@@ -84,7 +94,7 @@ end
 
 ---@protected
 ---@param perkData BasePerkDisplayData
-function CharacterPerksMenu:SetPerkButtonHints(perkData)
+function CharacterPerksMenu:SetButtonHints(perkData)
 	if self.mainController then
 		local playerData = PlayerDevData.resolve()
 
@@ -110,9 +120,52 @@ function CharacterPerksMenu:SetPerkButtonHints(perkData)
 end
 
 ---@protected
-function CharacterPerksMenu:ResetPerkButtonHints()
+function CharacterPerksMenu:ResetButtonHints()
 	if self.mainController then
 		self.mainController.buttonHintsController:RemoveButtonHint(self.revokePerkAction)
+	end
+end
+
+---@protected
+---@param tooltipController PerkMenuTooltipController
+---@param tooltipData PerkTooltipData|TraitTooltipData
+function CharacterPerksMenu:SetTooltipHints(tooltipController, tooltipData)
+	if self.mainController then
+		if not self.revokeTooltipHint then
+			self.revokeTooltipHint = inkTooltipHelper.AppendAction(
+				self.mainController.tooltipsManager,
+				'perkTooltip',
+				'wrapper/contentWrapper/contentFlexWrapper/wrapper',
+				'holdToUpgrade',
+				tooltipController,
+				self.revokePerkAction,
+				GameLocale.Text('Hold to Return')
+			)
+		end
+
+		---@type BasePerkDisplayData
+		local perkData
+		if tooltipData:IsA('PerkTooltipData') then
+			perkData = tooltipData.perkData
+		elseif tooltipData:IsA('TraitTooltipData') then
+			perkData = tooltipData.traitData
+		end
+
+		local playerData = PlayerDevData.resolve()
+
+		if playerData:CanRevokePerk(perkData.level) then
+			self.revokeTooltipHint:SetVisible(true)
+
+			if tooltipData.manager:IsPerkUpgradeable(perkData) then
+				self.revokeTooltipHint:SetMargin(76, -10, 0, 0)
+				self.revokeTooltipHint:GetWidget('line'):SetVisible(false)
+			else
+				self.revokeTooltipHint:SetMargin(76, 10, 0, 0)
+				self.revokeTooltipHint:GetWidget('line'):SetVisible(true)
+			end
+		else
+			self.revokeTooltipHint:SetVisible(false)
+		end
 	end
 end
 

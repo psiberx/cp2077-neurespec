@@ -1,21 +1,69 @@
 local inkWidgetHelper = require('game/ui/ink/inkWidgetHelper')
 
+---@class LibraryReference
+---@field resourcePath redResourceReferenceScriptToken
+---@field libraryId CName
+
 local inkTooltipHelper = {}
 
 ---@param tooltipsManager gameuiTooltipsManager
+---@param tooltipId Int32|CName
+---@return LibraryReference
+function inkTooltipHelper.FindLibraryReference(tooltipsManager, tooltipId)
+	if type(tooltipId) == 'number' then
+		return {
+			resourcePath = tooltipsManager.TooltipsLibrary,
+			libraryId = tooltipsManager.GenericTooltipsNames[tooltipId + 1]
+		}
+	end
+
+	if type(tooltipId) == 'string' then
+		tooltipId = CName.new(tooltipId)
+	end
+
+	for _, tooltipReference in ipairs(tooltipsManager.TooltipLibrariesReferences) do
+		if tooltipReference.identifier == tooltipId then
+			local libraryReference = tooltipReference.widgetLibraryReference
+			return {
+				resourcePath = inkWidgetLibraryResourceWrapper.GetPath(libraryReference.widgetLibrary),
+				libraryId = libraryReference.widgetItem
+			}
+		end
+	end
+
+	for _, tooltipReference in ipairs(tooltipsManager.TooltipLibrariesStyledReferences) do
+		if tooltipReference.identifier == tooltipId then
+			local libraryReference = tooltipReference.widgetLibraryReference
+			return {
+				resourcePath = inkWidgetLibraryResourceWrapper.GetPath(libraryReference.widgetLibrary),
+				libraryId = libraryReference.widgetItem
+			}
+		end
+	end
+
+	return nil
+end
+
+---@param tooltipsManager gameuiTooltipsManager
+---@param tooltipId Int32|CName
+---@param containerPath table|string
+---@param referenceName CName|string
 ---@param tooltipController AGenericTooltipController
 ---@param actionName CName
 ---@param actionLabel String
----@param placeAfter CName
 ---@return inkWidget
-function inkTooltipHelper.AppendAction(tooltipsManager, tooltipController, actionName, actionLabel, placeAfter)
+function inkTooltipHelper.AppendAction(tooltipsManager, tooltipId, containerPath, referenceName, tooltipController, actionName, actionLabel)
 	---@type inkCompoundWidget
 	local tooltipWidget = tooltipController:GetRootCompoundWidget()
 
 	---@type inkCompoundWidget
 	local containerWidget = tooltipWidget:GetWidgetByPath(
-		inkWidgetHelper.MakePath({ 'wrapper', 'contentWrapper', 'contentFlexWrapper', 'categoriesWrapper' })
+		inkWidgetHelper.MakePath(containerPath)
 	)
+
+	if not containerWidget then
+		return nil
+	end
 
 	---@type inkFlexWidget
 	local actionWidget = containerWidget:GetWidget(actionName)
@@ -26,21 +74,22 @@ function inkTooltipHelper.AppendAction(tooltipsManager, tooltipController, actio
 
 	---@type inkCompoundWidget
 	local tooltipsContainer = inkWidgetReference.Get(tooltipsManager:GetTooltipsContainerRef())
+	local tooltipReference = inkTooltipHelper.FindLibraryReference(tooltipsManager, tooltipId)
 
 	---@type inkCompoundWidget
-	local donorTooltipWidget = tooltipsManager:SpawnFromExternal(
+	local tooltipTemplate = tooltipsManager:SpawnFromExternal(
 		tooltipsContainer,
-		tooltipsManager.TooltipsLibrary,
-		tooltipsManager.GenericTooltipsNames[1]
+		tooltipReference.resourcePath,
+		tooltipReference.libraryId
 	)
 
-	actionWidget = donorTooltipWidget:GetWidgetByPath(
-		inkWidgetHelper.MakePath({ 'wrapper', 'contentWrapper', 'contentFlexWrapper', 'categoriesWrapper', 'holdToUpgrade' })
+	actionWidget = tooltipTemplate:GetWidgetByPath(
+		inkWidgetHelper.MakePath(containerPath .. '/' .. referenceName)
 	)
 
 	inkWidgetHelper.ReuseWidget(actionWidget, containerWidget, actionName)
 
-	tooltipsContainer:RemoveChild(donorTooltipWidget)
+	tooltipsContainer:RemoveChild(tooltipTemplate)
 
 	---@type inkHorizontalPanelWidget
 	local inputDisplayWidget = actionWidget:GetWidget('inputDisplayController')
@@ -50,16 +99,10 @@ function inkTooltipHelper.AppendAction(tooltipsManager, tooltipController, actio
 	inputDisplayController:SetInputAction(actionName)
 
 	---@type inkTextWidget
-	local inputTextWidget = inputDisplayWidget:GetWidget('action')
-	inputTextWidget:SetText(actionLabel)
+	local inputLabelWidget = inputDisplayWidget:GetWidget('action')
+	inputLabelWidget:SetText(actionLabel)
 
-	if placeAfter then
-		local siblingPosition = inkWidgetHelper.GetChildIndex(containerWidget, placeAfter)
-
-		if siblingPosition >= 0 then
-			containerWidget:ReorderChild(actionWidget, siblingPosition + 1)
-		end
-	end
+	inkWidgetHelper.PlaceAfter(containerWidget, actionWidget, referenceName)
 
 	return actionWidget
 end
