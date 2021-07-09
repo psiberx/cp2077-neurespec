@@ -23,8 +23,7 @@ You should have `<Cyberpunk 2077>/bin/x64/plugins/cyber_engine_tweaks/mods/Neure
 Neu-Re-Spec integrates into the *Hub* menu.
 You can access new functions in the *Hub > Character* section.
 
-To manage individual attributes, perks and skills, follow button hints in the tooltip 
-and in the bottom right corner of the screen.
+To manage individual stats, follow button hints in the bottom right corner and in the tooltip popups.
 
 ### Attributes
 
@@ -52,7 +51,7 @@ It's bound to the same key used to buy perk (default is `F` for keyboard input).
 
 When skill level is lowered all the bonuses from corresponding levels are canceled, including perk points.
 It's possible to get negative perk points if you have no unspent perk points, 
-and you cancel the level that gives perk points.  
+and you cancel the level that gives perk points.
 
 ### Full Reset
 
@@ -70,7 +69,7 @@ Check the [english translation](https://github.com/psiberx/cp2077-neurespec/blob
 
 ## Future Plans
 
-- An immersive version in which you have to meet the stats requirements and buy the mod from ripperdoc in order to access the respec functions.  
+- An immersive version in which you have to meet the stats requirements and buy the mod from ripperdoc in order to access the respec functions.
 - A redscript version of the mod.
 
 ## Acknowledgements
