@@ -128,7 +128,7 @@ function PlayerDevData:ResetAttributes()
 	self:ResetDevelopmentPoints(gamedataDevelopmentPointType.Attribute)
 
 	local availablePoints = self:GetDevPoints(gamedataDevelopmentPointType.Attribute)
-	if returnedPoints > availablePoints  then
+	if returnedPoints > availablePoints then
 		self:AddDevelopmentPoints(returnedPoints - availablePoints, gamedataDevelopmentPointType.Attribute)
 	end
 

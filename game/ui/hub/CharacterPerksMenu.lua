@@ -30,7 +30,7 @@ function CharacterPerksMenu:OnBootstrap()
 	end)
 
 	---@param perkData BasePerkDisplayData
-  	Override('PerksMainGameController', 'SetPerksButtonHintHoverOver', function(_, perkData)
+	Override('PerksMainGameController', 'SetPerksButtonHintHoverOver', function(_, perkData)
 		if perkData then
 			self:SetButtonHints(perkData)
 		end

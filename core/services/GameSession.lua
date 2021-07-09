@@ -210,7 +210,7 @@ local function notifyObservers()
 	end
 
 	if stateChanged then
-		local events =  determineEvents(currentState)
+		local events = determineEvents(currentState)
 
 		for _, event in ipairs(events) do
 			if listeners[event] then

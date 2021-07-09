@@ -34,7 +34,7 @@ function CharacterMainMenu:OnBootstrap()
 	end)
 
 	---@param this PerksMainGameController
-  	Override('PerksMainGameController', 'OnAttributeHoverOut', function(this)
+	Override('PerksMainGameController', 'OnAttributeHoverOut', function(this)
 		local isAttributeHovered = false
 
 		for _, attributeController in ipairs(this.attributesControllersList) do
@@ -52,7 +52,7 @@ function CharacterMainMenu:OnBootstrap()
 	end)
 
 	---@param attributeData AttributeData
-  	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(_, attributeData)
+	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(_, attributeData)
 		if attributeData then
 			self:SetButtonHints(attributeData)
 		end
