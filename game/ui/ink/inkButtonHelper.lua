@@ -186,15 +186,16 @@ function inkButtonHelper.ApplyButtonState(buttonController, buttonState)
 
 	local menuData = buttonController.menuData
 
-	if menuData.userData and menuData.eventName then
-		buttonController:UnregisterFromCallback('OnRelease', menuData.userData, menuData.eventName)
-	end
+	--if menuData.userData and menuData.eventName then
+	--	buttonController:UnregisterFromCallback('OnRelease', menuData.userData, menuData.eventName)
+	--end
 
-	if buttonState.callback then
-		menuData.userData = buttonState.callback.object
-		menuData.eventName = buttonState.callback.method
-
+	if buttonState.callback and buttonState.callback.object then
 		buttonController:UnregisterFromCallback('OnRelease', buttonController, 'OnMenuChangeRelease')
+		buttonController:UnregisterFromCallback('OnRelease', buttonState.callback.object, buttonState.callback.method)
+
+		--menuData.userData = buttonState.callback.object
+		--menuData.eventName = buttonState.callback.method
 	end
 
 	if buttonState.disabled ~= nil then
@@ -209,18 +210,22 @@ function inkButtonHelper.ApplyButtonState(buttonController, buttonState)
 
 	buttonController.menuData = menuData
 
-	if not menuData.disabled and menuData.userData and menuData.eventName then
-		buttonController:RegisterToCallback('OnRelease', menuData.userData, menuData.eventName)
+	if not menuData.disabled and buttonState.callback and buttonState.callback.object then
+		buttonController:RegisterToCallback('OnRelease', buttonState.callback.object, buttonState.callback.method)
 	end
+
+	--if not menuData.disabled and menuData.userData and menuData.eventName then
+	--	buttonController:RegisterToCallback('OnRelease', menuData.userData, menuData.eventName)
+	--end
 end
 
 ---@param buttonController MenuItemController
 function inkButtonHelper.DisposeButton(buttonController)
-	local menuData = buttonController.menuData
-
-	if menuData.userData and menuData.eventName then
-		buttonController:UnregisterFromCallback('OnRelease', menuData.userData, menuData.eventName)
-	end
+	--local menuData = buttonController.menuData
+	--
+	--if menuData.userData and menuData.eventName then
+	--	buttonController:UnregisterFromCallback('OnRelease', menuData.userData, menuData.eventName)
+	--end
 
 	buttonController.menuData = MenuData.new()
 end

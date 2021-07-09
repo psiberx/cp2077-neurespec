@@ -6,16 +6,21 @@ local inkButtonHelper = require('game/ui/ink/inkButtonHelper')
 
 ---@class CharacterResetPanel : Module
 ---@field hubMenuController MenuHubLogicController
+---@field mainController PerksMainGameController
 ---@field resetAttrsController MenuItemController
 ---@field resetPerksController MenuItemController
 ---@field resetAttrsEventId Int32
 ---@field resetPerksEventId Int32
+---@field characterMenuName CName
+---@field dummyWidgetContainer inkCompoundWidget
 local CharacterResetPanel = Module.extend()
 
 ---@protected
 function CharacterResetPanel:Initialize()
 	self.resetAttrsEventId = -1001
 	self.resetPerksEventId = -1002
+	self.characterMenuName = CName.new('perks_main')
+	self.dummyWidgetContainer = inkCompoundWidget.new()
 end
 
 ---@public
@@ -25,37 +30,40 @@ function CharacterResetPanel:OnBootstrap()
 		self.hubMenuController = this
 	end)
 
-	Observe('MenuHubLogicController', 'OnUninitialize', function()
-		self.hubMenuController = nil
-	end)
-
 	---@param this PerksMainGameController
 	Observe('PerksMainGameController', 'ResetData', function(this)
-		if self.hubMenuController then
-			local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
+		local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
 
+		if self.hubMenuController then
+			self.mainController = this
 			self.resetAttrsController = inkButtonHelper.ReuseButton(self.hubMenuController.btnPhone.widget, resetPanelWidget)
 			self.resetPerksController = inkButtonHelper.ReuseButton(self.hubMenuController.btnShard.widget, resetPanelWidget)
 
 			inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
 				label = GameLocale.Text('UI-Menus-Attributes-ResetAttributes'),
 				menuData = { identifier = self.resetAttrsEventId },
-				callback = { object = this, method = 'OnResetPerksClick' }
+				callback = { object = self.mainController, method = 'OnResetPerksClick' }
 			})
 
 			inkButtonHelper.ApplyButtonState(self.resetPerksController, {
 				label = GameLocale.Text('UI-Menus-Perks-ResetPerks'),
 				menuData = { identifier = self.resetPerksEventId },
-				callback = { object = this, method = 'OnResetPerksClick' }
+				callback = { object = self.mainController, method = 'OnResetPerksClick' }
 			})
 
-			inkButtonHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { top = 170 }	})
+			inkButtonHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { top = 170 } })
 			inkButtonHelper.ApplyButtonStyle(self.resetPerksController, { margin = { top = 50 } })
+
+			self.hubMenuController = nil
+		elseif self.resetAttrsController then
+			self.mainController = this
+			self.resetAttrsController:Reparent(resetPanelWidget)
+			self.resetPerksController:Reparent(resetPanelWidget)
 		end
 	end)
 
 	---@param this PerksMainGameController
-  	Observe('PerksMainGameController', 'UpdateAvailablePoints', function(this)
+	Observe('PerksMainGameController', 'UpdateAvailablePoints', function(this)
 		if self.resetAttrsController and this.activeScreen == CharacterScreenType.Attributes then
 			local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
 			resetPanelWidget:GetWidget('resetPointBtn'):SetVisible(false)
@@ -66,10 +74,12 @@ function CharacterResetPanel:OnBootstrap()
 
 			inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
 				attrPoints = playerData:GetSpentPoints(gamedataDevelopmentPointType.Attribute),
+				callback = { object = self.mainController, method = 'OnResetPerksClick' }
 			})
 
 			inkButtonHelper.ApplyButtonState(self.resetPerksController, {
 				perkPoints = playerData:GetSpentPoints(gamedataDevelopmentPointType.Primary),
+				callback = { object = self.mainController, method = 'OnResetPerksClick' }
 			})
 		end
 	end)
@@ -123,18 +133,34 @@ function CharacterResetPanel:OnBootstrap()
 		this.resetConfirmationToken = inkGameNotificationToken.new()
 	end)
 
+	---@param menuItemData MenuItemData
+	Observe('MenuScenario_HubMenu', 'OnSelectMenuItem', function(_, menuItemData)
+		if self.resetAttrsController and menuItemData.menuData.fullscreenName ~= self.characterMenuName then
+			if self.dummyWidgetContainer:GetNumChildren() == 0 then
+				inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
+					callback = { object = self.mainController, method = 'OnResetPerksClick' },
+					disabled = true
+				})
+
+				inkButtonHelper.ApplyButtonState(self.resetPerksController, {
+					callback = { object = self.mainController, method = 'OnResetPerksClick' },
+					disabled = true
+				})
+
+				self.resetAttrsController:Reparent(self.dummyWidgetContainer)
+				self.resetPerksController:Reparent(self.dummyWidgetContainer)
+			end
+		end
+	end)
+
+	Observe('PerksMainGameController', 'OnUninitialize', function()
+		self.mainController = nil
+	end)
+
 	Observe('MenuScenario_Idle', 'OnEnterScenario', function()
-		if self.resetAttrsController then
-			inkButtonHelper.DisposeButton(self.resetAttrsController)
-			self.resetAttrsController = nil
-		end
-
-		if self.resetPerksController then
-			inkButtonHelper.DisposeButton(self.resetPerksController)
-			self.resetPerksController = nil
-		end
-
 		self.hubMenuController = nil
+		self.resetAttrsController = nil
+		self.resetPerksController = nil
 	end)
 end
 
