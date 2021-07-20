@@ -23,13 +23,20 @@ function CharacterSkillsPanel:OnBootstrap()
 	---@param this PerksMainGameController
 	Observe('PerksMainGameController', 'OnInitialize', function(this)
 		self.mainController = this
-		self.perksController = inkWidgetRef.GetController(this.perksScreen)
 	end)
 
 	Observe('PerksMainGameController', 'OnUninitialize', function()
 		self.mainController = nil
-		self.perksController = nil
 		self.adjustButtonHint = nil
+	end)
+
+	---@param this PerkScreenController
+	Observe('PerkScreenController', 'OnInitialize', function(this)
+		self.perksController = this
+	end)
+
+	Observe('PerkScreenController', 'OnUninitialize', function()
+		self.perksController = nil
 	end)
 
 	---@param this StatsStreetCredReward
@@ -40,11 +47,13 @@ function CharacterSkillsPanel:OnBootstrap()
 			end)
 		end
 
-		Cron.Every(0.01, function(timer)
-			if self:RegisterHoldCallbacks() then
-				timer:Halt()
-			end
-		end)
+		if self.perksController then
+			Cron.Every(0.01, function(timer)
+				if self:RegisterHoldCallbacks() then
+					timer:Halt()
+				end
+			end)
+		end
 	end)
 
 	---@param event inkPointerEvent
@@ -102,6 +111,10 @@ end
 ---@protected
 ---@return boolean
 function CharacterSkillsPanel:RegisterHoldCallbacks()
+	if not self.perksController then
+		return true
+	end
+
 	local rewardsController = self.perksController.rewardsController
 	local currentNumItems = inkCompoundRef.GetNumChildren(rewardsController.prevRewardsList)
 		+ inkCompoundRef.GetNumChildren(rewardsController.currentRewardsList)
