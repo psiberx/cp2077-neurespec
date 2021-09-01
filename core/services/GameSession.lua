@@ -7,7 +7,7 @@ Copyright (c) 2021 psiberx
 ]]
 
 local GameSession = {
-	version = '1.2.1',
+	version = '1.2.2',
 	framework = '1.13.0'
 }
 
@@ -587,7 +587,11 @@ local function initialize(event)
 			end
 		end)
 
-		Observe('FastTravelSystem', 'OnPerformFastTravelRequest', function(request)
+		Observe('FastTravelSystem', 'OnPerformFastTravelRequest', function(_, request)
+			if request == nil then
+				request = _
+			end
+
 			--spdlog.error(('FastTravelSystem::OnPerformFastTravelRequest()'))
 
 			local fastTravelDestination = request.pointData.pointRecord
