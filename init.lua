@@ -9,8 +9,8 @@ Copyright (c) 2021 psiberx
 
 loadfile('core/meta') {
 	mod = 'NeureSpec',
-	version = '0.9.4',
-	framework = '1.14.0'
+	version = '0.9.5',
+	framework = '1.16.2'
 }
 
 local Cron = require('core/services/Cron')

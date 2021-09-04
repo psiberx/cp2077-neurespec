@@ -31,8 +31,18 @@ function CharacterResetPanel:OnBootstrap()
 	end)
 
 	---@param this PerksMainGameController
+	Observe('PerksMainGameController', 'OnInitialize', function(this)
+		Cron.NextTick(function()
+			local resetPanelWidget = this.respecButtonContainer.widget
+			resetPanelWidget:GetWidget('container'):SetVisible(false)
+			resetPanelWidget:GetWidget('resetPointBtn'):SetVisible(false)
+			resetPanelWidget:UnregisterFromCallback('OnRelease', this, 'OnResetPerksClick')
+		end)
+	end)
+
+	---@param this PerksMainGameController
 	Observe('PerksMainGameController', 'ResetData', function(this)
-		local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
+		local resetPanelWidget = this.respecButtonContainer.widget
 
 		if self.hubMenuController then
 			self.mainController = this
@@ -51,8 +61,8 @@ function CharacterResetPanel:OnBootstrap()
 				callback = { object = self.mainController, method = 'OnResetPerksClick' }
 			})
 
-			inkButtonHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { top = 170 } })
-			inkButtonHelper.ApplyButtonStyle(self.resetPerksController, { margin = { top = 50 } })
+			inkButtonHelper.ApplyButtonStyle(self.resetAttrsController, { margin = { left = 230, top = 170 } })
+			inkButtonHelper.ApplyButtonStyle(self.resetPerksController, { margin = { left = 230, top = 50 } })
 
 			self.hubMenuController = nil
 		elseif self.resetAttrsController then
@@ -65,11 +75,6 @@ function CharacterResetPanel:OnBootstrap()
 	---@param this PerksMainGameController
 	Observe('PerksMainGameController', 'UpdateAvailablePoints', function(this)
 		if self.resetAttrsController and this.activeScreen == CharacterScreenType.Attributes then
-			local resetPanelWidget = this.pointsDisplayController.resetWidget.widget
-			resetPanelWidget:GetWidget('resetPointBtn'):SetVisible(false)
-			resetPanelWidget:GetWidget('spentPoints'):SetVisible(false)
-			resetPanelWidget:SetVisible(true)
-
 			local playerData = PlayerDevData.resolve()
 
 			inkButtonHelper.ApplyButtonState(self.resetAttrsController, {
