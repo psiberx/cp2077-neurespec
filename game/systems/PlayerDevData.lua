@@ -187,7 +187,7 @@ end
 
 ---@public
 function PlayerDevData:ResetPerks()
-	self:RemoveAllPerks()
+	self:RemoveAllPerks(true)
 end
 
 ---@public
