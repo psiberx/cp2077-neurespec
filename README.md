@@ -8,8 +8,8 @@ Neu-Re-Spec is a mod that allows you to respec your character at any moment.
 
 ## Requirements
 
-- [Cyber Engine Tweaks](https://github.com/yamashi/CyberEngineTweaks) 1.14.0
-- Cyberpunk 2077 1.23
+- [Cyber Engine Tweaks](https://github.com/yamashi/CyberEngineTweaks) 1.21
+- Cyberpunk 2077 1.61
 
 ## Installation
 

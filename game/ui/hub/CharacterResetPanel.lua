@@ -73,7 +73,7 @@ function CharacterResetPanel:OnBootstrap()
 	end)
 
 	---@param this PerksMainGameController
-	Observe('PerksMainGameController', 'UpdateAvailablePoints', function(this)
+	ObserveAfter('PerksMainGameController', 'UpdateAvailablePoints', function(this)
 		if self.resetAttrsController and this.activeScreen == CharacterScreenType.Attributes then
 			local playerData = PlayerDevData.resolve()
 
@@ -86,6 +86,8 @@ function CharacterResetPanel:OnBootstrap()
 				perkPoints = playerData:GetSpentPoints(gamedataDevelopmentPointType.Primary),
 				callback = { object = self.mainController, method = 'OnResetPerksClick' }
 			})
+
+    		this.respecButtonContainer:SetVisible(true)
 		end
 	end)
 
