@@ -1,5 +1,6 @@
 /.dev
 /.idea
+/dev
 /dist
 /db.sqlite3
 /debug.lua

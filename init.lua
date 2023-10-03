@@ -4,13 +4,13 @@ NeureSpec
 - Integrates into the Hub menu
 - Multi-language support
 
-Copyright (c) 2021 psiberx
+Copyright (c) 2023 psiberx
 ]]--
 
 loadfile('core/meta') {
 	mod = 'NeureSpec',
-	version = '1.1.0',
-	framework = '1.20.0'
+	version = '1.2.0',
+	framework = '1.26.0'
 }
 
 local Cron = require('core/services/Cron')

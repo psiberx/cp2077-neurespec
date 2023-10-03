@@ -10,9 +10,9 @@ local GamePackage = Package.extend()
 ---@public
 function GamePackage:Register()
 	self:RegisterModule(CharacterMainMenu.new())
-	self:RegisterModule(CharacterPerksMenu.new())
-	self:RegisterModule(CharacterResetPanel.new())
-	self:RegisterModule(CharacterSkillsPanel.new())
+	--self:RegisterModule(CharacterPerksMenu.new())
+	--self:RegisterModule(CharacterResetPanel.new())
+	--self:RegisterModule(CharacterSkillsPanel.new())
 end
 
 return GamePackage

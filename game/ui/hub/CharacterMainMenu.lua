@@ -7,7 +7,7 @@ local inkTooltipHelper = require('game/ui/ink/inkTooltipHelper')
 ---@class CharacterMainMenu : Module
 ---@field upgradeAttributeAction CName
 ---@field revokeAttributeAction CName
----@field mainController PerksMainGameController
+---@field mainController NewPerksCategoriesGameController
 ---@field revokeTooltipHint inkWidget
 ---@field animCallbackProxy TargetHitIndicatorGameController
 ---@field animCallbackTargets table
@@ -23,18 +23,18 @@ end
 
 ---@public
 function CharacterMainMenu:OnBootstrap()
-	---@param this PerksMainGameController
-	Observe('PerksMainGameController', 'OnInitialize', function(this)
+	---@param this NewPerksCategoriesGameController
+	Observe('NewPerksCategoriesGameController', 'OnInitialize', function(this)
 		self.mainController = this
 	end)
 
-	Observe('PerksMainGameController', 'OnUninitialize', function()
+	Observe('NewPerksCategoriesGameController', 'OnUninitialize', function()
 		self.mainController = nil
 		self.revokeTooltipHint = nil
 	end)
 
-	---@param this PerksMainGameController
-	Override('PerksMainGameController', 'OnAttributeHoverOut', function(this)
+	---@param this NewPerksCategoriesGameController
+	Override('NewPerksCategoriesGameController', 'OnAttributeHoverOut', function(this)
 		local isAttributeHovered = false
 
 		for _, attributeController in ipairs(this.attributesControllersList) do
@@ -51,14 +51,14 @@ function CharacterMainMenu:OnBootstrap()
 		end
 	end)
 
-	---@param attributeData AttributeData
-	Override('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOver', function(_, attributeData)
-		if attributeData then
-			self:SetButtonHints(attributeData)
+	---@param evt PerksMenuAttributeItemHoverOver
+	ObserveAfter('NewPerksCategoriesGameController', 'OnAttributeHoverOver', function(_, evt)
+		if evt then
+			self:SetButtonHints(evt.attributeData)
 		end
 	end)
 
-	Observe('PerksMainGameController', 'SetAttributeBuyButtonHintHoverOut', function()
+	Observe('NewPerksCategoriesGameController', 'SetAttributeBuyButtonHintHoverOut', function()
 		-- Nested RTTI call workaround
 		Cron.NextTick(function()
 			self:ResetButtonHints()
@@ -83,6 +83,10 @@ function CharacterMainMenu:OnBootstrap()
 		if event:IsAction(self.revokeAttributeAction) and attributeData and playerData:CanRevokeAttribute(attributeData.value) then
 			local progress = event:GetHoldProgress()
 
+            if not this.holdStarted and progress > 0 then
+                this.holdStarted = true
+            end
+
 			if this.holdStarted and progress >= 1 then
 				playerData:RevokeAttribute(attributeData.type)
 
@@ -97,12 +101,18 @@ function CharacterMainMenu:OnBootstrap()
 				table.insert(self.animCallbackTargets, this)
 
 				this:PlaySound('Item', 'OnCraftFailed')
+
+                this.dataManager:UpgradeAttribute(event.attributeData)
+                this:QueueEvent(UpdatePlayerDevelopmentData.new())
+
+				this.holdStarted = false;
 			end
 		end
 	end)
 
 	---@param proxyController TargetHitIndicatorGameController
 	Observe('TargetHitIndicatorGameController', 'OnAnimFinished', function(proxyController)
+	    print('TargetHitIndicatorGameController', 'OnAnimFinished')
 		if not proxyController.rootWidget and #self.animCallbackTargets > 0 then
 			if self.animCallbackTargets[#self.animCallbackTargets]:IsA('PerksMenuAttributeItemController') then
 				local attributeItemController = table.remove(self.animCallbackTargets)
@@ -118,16 +128,16 @@ function CharacterMainMenu:OnBootstrap()
 		end
 	end)
 
-	---@param this PerksMainGameController
-	---@param event AttributeBoughtEvent
-	Observe('PerksMainGameController', 'OnAttributePurchased', function(this, event)
-		for _, attributeController in ipairs(this.attributesControllersList) do
-			if attributeController.data.type == event.attributeType then
-				self:UpdateDisplayData(attributeController)
-				break
-			end
-		end
-	end)
+	-----@param this NewPerksCategoriesGameController
+	-----@param event AttributeBoughtEvent
+	--Observe('NewPerksCategoriesGameController', 'OnAttributePurchaseRequest', function(this, event)
+	--	for _, attributeController in ipairs(this.attributesControllersList) do
+	--		if attributeController.data.type == event.attributeType then
+	--			self:UpdateDisplayData(attributeController)
+	--			break
+	--		end
+	--	end
+	--end)
 
 	---@param this PerksMenuAttributeDisplayController
 	Observe('PerksMenuAttributeDisplayController', 'Update', function(this)
@@ -138,6 +148,14 @@ function CharacterMainMenu:OnBootstrap()
 			end
 		end)
 	end)
+
+	ObserveBefore('NewPerksCategoriesGameController', 'ResolveResetAttributesButtonVisibility', function(self)
+        self.questSystem:SetFact('ResetAttributeDisabled', 0)
+    end)
+
+	ObserveAfter('NewPerksCategoriesGameController', 'OnResetConfirmed', function(self)
+        self:ResolveResetAttributesButtonVisibility()
+    end)
 end
 
 ---@protected
