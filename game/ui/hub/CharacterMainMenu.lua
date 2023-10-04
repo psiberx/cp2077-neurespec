@@ -112,7 +112,6 @@ function CharacterMainMenu:OnBootstrap()
 
 	---@param proxyController TargetHitIndicatorGameController
 	Observe('TargetHitIndicatorGameController', 'OnAnimFinished', function(proxyController)
-	    print('TargetHitIndicatorGameController', 'OnAnimFinished')
 		if not proxyController.rootWidget and #self.animCallbackTargets > 0 then
 			if self.animCallbackTargets[#self.animCallbackTargets]:IsA('PerksMenuAttributeItemController') then
 				local attributeItemController = table.remove(self.animCallbackTargets)

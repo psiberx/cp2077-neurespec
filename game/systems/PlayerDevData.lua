@@ -106,7 +106,7 @@ function PlayerDevData:RevokeAttribute(attributeType)
 
 		self:ModifyAttribute(attributeType, -1.0)
 		self:AdjustDevPoints(gamedataDevelopmentPointType.Attribute, attributeCost)
-		self:InvalidatePerks()
+		self:InvalidatePerks(attributeType)
 	end
 end
 
@@ -191,14 +191,31 @@ function PlayerDevData:ResetPerks()
 end
 
 ---@public
-function PlayerDevData:InvalidatePerks()
-	for _, perkArea in ipairs(self.perkAreas) do
-		if not perkArea.unlocked then
-			for _, perk in ipairs(perkArea.boughtPerks) do
-				self:RemovePerk(perk.type)
-			end
-		end
-	end
+---@param attributeType gamedataStatType
+function PlayerDevData:InvalidatePerks(attributeType)
+    --local attributeIndex = EnumInt(PlayerDevelopmentData.StatTypeToAttributeDataType(attributeType))
+    local uiSystem = Game.GetUISystem()
+    local _, attributeData = self:GetAttributeData(attributeType)
+    for _, perkData in ipairs(attributeData.unlockedPerks) do
+        if not self:HasEnoughtAttributePoints(perkData.type) then
+            while true do
+                local sold, perkLevel = self:ForceSellNewPerk(perkData.type)
+                if not sold then
+                    break
+                end
+                local soldEvent = NewPerkSoldEvent.new()
+                soldEvent.perkType = perkData.type
+                soldEvent.perkLevelSold = perkLevel
+                uiSystem:QueueEvent(soldEvent)
+                self.owner:QueueEvent(soldEvent)
+            end
+            if self:LockNewPerk(perkData.type) then
+                local lockEvent = NewPerkLockedEvent.new()
+                lockEvent.perkType = perkData.type
+                uiSystem:QueueEvent(lockEvent)
+            end
+        end
+    end
 end
 
 -- Skills --

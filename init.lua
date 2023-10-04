@@ -9,7 +9,7 @@ Copyright (c) 2023 psiberx
 
 loadfile('core/meta') {
 	mod = 'NeureSpec',
-	version = '1.2.0',
+	version = '1.2.1',
 	framework = '1.26.0'
 }
 
